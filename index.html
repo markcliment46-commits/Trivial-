@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RascaGana Kids | ¡Aprende y Gana!</title>
+    
+    <!-- Google Fonts para un look moderno y redondeado -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Librería de Confeti para la celebración -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2F2E41;
+            --white: #FFFFFF;
+            --bg: #F7FFF7;
+            --correct: #6BCB77;
+            --wrong: #FF6B6B;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg);
+            color: var(--dark);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- UI Superior --- */
+        #header-ui {
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: var(--white);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .stat-card {
+            background: #f0f0f0;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #ddd;
+        }
+
+        #lives-display { color: var(--primary); }
+        #points-display { color: var(--secondary); }
+
+        /* --- Contenedor de Pantallas --- */
+        .screen {
+            display: none;
+            width: 90%;
+            max-width: 500px;
+            margin-top: 25px;
+            text-align: center;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .active { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Trivia --- */
+        .question-box {
+            background: var(--white);
+            padding: 30px 20px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .category-badge {
+            background: var(--accent);
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .option-btn {
+            background: var(--white);
+            border: 3px solid #eee;
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .option-btn:active { transform: scale(0.95); }
+        .correct { background: var(--correct) !important; color: white !important; border-color: #55ae60 !important; }
+        .wrong { background: var(--wrong) !important; color: white !important; border-color: #d85a5a !important; }
+
+        /* --- Temporizador --- */
+        #timer-container {
+            width: 100%;
+            height: 14px;
+            background: #eee;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #4ECDC4, #FF6B6B);
+            transition: width 1s linear;
+        }
+
+        /* --- Rasca y Gana --- */
+        #scratch-container {
+            position: relative;
+            width: 320px;
+            height: 160px;
+            margin: 20px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+            background: #D4AF37; /* Color oro de fondo */
+        }
+
+        #scratch-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            touch-action: none;
+            cursor: url('https://img.icons8.com/color/32/coin.png'), auto;
+        }
+
+        .scratch-reward {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #FFD700, #FDB931);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            border: 8px solid #B8860B;
+        }
+
+        /* --- Colección --- */
+        .collection-section {
+            margin-top: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 25px;
+        }
+
+        .collection-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 15px;
+            min-height: 50px;
+        }
+
+        .emoji-item {
+            font-size: 2.2rem;
+            background: #f8f8f8;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+        }
+
+        /* --- Botones --- */
+        .btn-main {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+            transition: 0.3s;
+        }
+
+        .btn-main:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255,107,107,0.5); }
+
+    </style>
+</head>
+<body>
+
+    <div id="header-ui">
+        <div class="stat-card" id="lives-display">❤️❤️❤️</div>
+        <div class="stat-card" id="points-display">Puntos: 0/50</div>
+    </div>
+
+    <!-- PANTALLA INICIO -->
+    <div id="screen-start" class="screen active">
+        <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 10px;">RascaGana Kids</h1>
+        <p style="font-size: 1.1rem; color: #666;">¡Responde trivias para ganar boletos dorados!</p>
+        
+        <div class="collection-section">
+            <h3>Mi Colección 🏆</h3>
+            <div class="collection-grid" id="main-collection">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+        <br>
+        <button class="btn-main" onclick="startGame()">¡EMPEZAR A JUGAR!</button>
+    </div>
+
+    <!-- PANTALLA TRIVIA -->
+    <div id="screen-trivia" class="screen">
+        <div id="timer-container"><div id="timer-bar"></div></div>
+        <div class="question-box">
+            <span class="category-badge" id="category-text">Cargando...</span>
+            <h2 id="question-text" style="margin-top: 20px;">Preparando pregunta...</h2>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+    </div>
+
+    <!-- PANTALLA RASCA Y GANA -->
+    <div id="screen-scratch" class="screen">
+        <h2 style="color: #B8860B; font-size: 1.8rem;">✨ ¡RASCA TU PREMIO! ✨</h2>
+        <div id="scratch-container">
+            <div class="scratch-reward">
+                <span style="font-weight: 600; color: #8B4513;">VALOR DEL BOLETO:</span>
+                <strong id="scratch-value" style="font-size: 3.5rem; color: #8B4513;">+0</strong>
+                <span style="font-weight: 600; color: #8B4513;">PUNTOS</span>
+            </div>
+            <canvas id="scratch-canvas" width="320" height="160"></canvas>
+        </div>
+        <p id="scratch-instruction">Usa tu dedo o mouse para raspar la plata</p>
+    </div>
+
+    <!-- PANTALLA FINAL -->
+    <div id="screen-end" class="screen">
+        <h1 id="end-title" style="font-size: 2.5rem;">Game Over</h1>
+        <div id="prize-reveal" style="font-size: 5rem; margin: 20px 0; display:none;">🎁</div>
+        <p id="end-message" style="font-size: 1.2rem;"></p>
+        <br>
+        <button class="btn-main" onclick="resetGame()">VOLVER A INTENTAR</button>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let state = {
+            lives: 3,
+            points: 0,
+            collection: JSON.parse(localStorage.getItem('rg_collection')) || [],
+            timer: 45,
+            timerInterval: null,
+            scratchComplete: false
+        };
+
+        const EMOJIS = ['🏆', '🌟', '🎨', '🚀', '👑', '🎪', '🦄', '🦖', '🍕', '🎮', '🛹', '💎'];
+        
+        // --- MOTOR DE TRIVIA ---
+        async function fetchQuestion() {
+            try {
+                // Filtramos por dificultad media/fácil y categoría variada
+                const response = await fetch("https://opentdb.com/api.php?amount=1&type=multiple&difficulty=easy");
+                const data = await response.json();
+                return data.results[0];
+            } catch (e) {
+                return {
+                    category: "Cultura General",
+                    question: "¿Cuál es el planeta rojo?",
+                    correct_answer: "Marte",
+                    incorrect_answers: ["Júpiter", "Venus", "Saturno"]
+                };
+            }
+        }
+
+        async function showTrivia() {
+            switchScreen('screen-trivia');
+            const q = await fetchQuestion();
+            
+            document.getElementById('category-text').innerText = decodeHTML(q.category);
+            document.getElementById('question-text').innerText = decodeHTML(q.question);
+            
+            // Mezclamos respuestas y limitamos a 3 opciones como pide el requisito
+            let options = [q.correct_answer, q.incorrect_answers[0], q.incorrect_answers[1]];
+            options = options.sort(() => Math.random() - 0.5);
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = decodeHTML(opt);
+                btn.onclick = () => checkAnswer(opt, q.correct_answer, btn);
+                container.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            state.timer = 45;
+            const bar = document.getElementById('timer-bar');
+            bar.style.transition = 'none';
+            bar.style.width = '100%';
+            
+            setTimeout(() => {
+                bar.style.transition = 'width 45s linear';
+                bar.style.width = '0%';
+            }, 50);
+
+            clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.timer--;
+                if (state.timer <= 0) {
+                    clearInterval(state.timerInterval);
+                    handleFail();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selected, correct, btn) {
+            clearInterval(state.timerInterval);
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            if (selected === correct) {
+                btn.classList.add('correct');
+                setTimeout(() => initScratch(), 800);
+            } else {
+                btn.classList.add('wrong');
+                // Mostrar la correcta
+                allBtns.forEach(b => { if(b.innerHTML === decodeHTML(correct)) b.classList.add('correct'); });
+                setTimeout(() => handleFail(), 1500);
+            }
+        }
+
+        function handleFail() {
+            state.lives--;
+            updateUI();
+            if (state.lives <= 0) {
+                endGame(false);
+            } else {
+                showTrivia();
+            }
+        }
+
+        // --- MOTOR RASCA Y GANA ---
+        function initScratch() {
+            state.scratchComplete = false;
+            switchScreen('screen-scratch');
+            const canvas = document.getElementById('scratch-canvas');
+            const ctx = canvas.getContext('2d');
+            const rewardValue = Math.floor(Math.random() * 6) + 1; // Puntos 1-6
+            document.getElementById('scratch-value').innerText = `+${rewardValue}`;
+            
+            // Capa gris plateada
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Efecto de textura
+            ctx.fillStyle = '#A8A8A8';
+            for(let i=0; i<400; i++) {
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+            }
+
+            let scratchedArea = 0;
+            const totalArea = canvas.width * canvas.height;
+
+            function scratch(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.pageX || e.touches[0].pageX) - rect.left;
+                const y = (e.pageY || e.touches[0].pageY) - rect.top;
+                
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.fill();
+
+                scratchedArea += 150; // Estimación de área limpiada
+                if (scratchedArea > totalArea * 0.5 && !state.scratchComplete) {
+                    state.scratchComplete = true;
+                    finishScratch(rewardValue);
+                }
+            }
+
+            canvas.onmousemove = (e) => { if(e.buttons === 1) scratch(e) };
+            canvas.ontouchmove = scratch;
+        }
+
+        function finishScratch(points) {
+            state.points += points;
+            updateUI();
+            
+            setTimeout(() => {
+                if (state.points >= 50) {
+                    winGrandPrize();
+                } else {
+                    showTrivia();
+                }
+            }, 1200);
+        }
+
+        // --- FINALIZACIÓN ---
+        function winGrandPrize() {
+            const prize = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+            state.collection.push(prize);
+            localStorage.setItem('rg_collection', JSON.stringify(state.collection));
+            
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            
+            document.getElementById('end-title').innerText = "¡PREMIO CONSEGUIDO!";
+            document.getElementById('end-message').innerText = `Has llegado a 50 puntos y ganaste:`;
+            document.getElementById('prize-reveal').innerText = prize;
+            document.getElementById('prize-reveal').style.display = 'block';
+            
+            state.points = 0; // Reiniciar para seguir coleccionando
+            updateUI();
+            switchScreen('screen-end');
+        }
+
+        function endGame(victory) {
+            document.getElementById('end-title').innerText = "¡Vuelve a intentarlo!";
+            document.getElementById('end-message').innerText = `Te quedaste con ${state.points} puntos.`;
+            document.getElementById('prize-reveal').style.display = 'none';
+            switchScreen('screen-end');
+        }
+
+        // --- UTILIDADES ---
+        function updateUI() {
+            document.getElementById('lives-display').innerText = '❤️'.repeat(state.lives);
+            document.getElementById('points-display').innerText = `Puntos: ${state.points}/50`;
+            const collectionContainer = document.getElementById('main-collection');
+            collectionContainer.innerHTML = state.collection.map(e => `<span class="emoji-item">${e}</span>`).join('');
+        }
+
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startGame() {
+            state.lives = 3;
+            state.points = 0;
+            updateUI();
+            showTrivia();
+        }
+
+        function resetGame() {
+            switchScreen('screen-start');
+            updateUI();
+        }
+
+        function decodeHTML(html) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
