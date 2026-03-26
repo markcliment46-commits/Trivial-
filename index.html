@@ -1,317 +1,383 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RascaGana Kids</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RascaGana Kids Junior 🇪🇸</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="apple-touch-icon" href="http://googleusercontent.com/image_collection/image_retrieval/3237237944383438106_0">
 
-<style>
-body {
-  margin: 0;
-  font-family: "Comic Sans MS", Arial;
-  background: linear-gradient(135deg, #ffcc70, #ff6f91);
-  text-align: center;
-  color: #333;
-}
+    <style>
+        :root {
+            --fondo: #E0F7FA;
+            --primario: #FF595E; /* Rojo suave */
+            --secundario: #1982C4; /* Azul cielo */
+            --acento: #FFCA3A; /* Amarillo sol */
+            --verde: #8AC926; /* Verde manzana */
+            --blanco: #FFFFFF;
+            --texto: #2D3142;
+        }
 
-.container {
-  padding: 20px;
-}
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--fondo);
+            background-image: radial-gradient(#B2EBF2 2px, transparent 2px);
+            background-size: 30px 30px;
+            color: var(--texto);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-h1 {
-  color: white;
-}
+        /* --- MARCADORES DIVERTIDOS --- */
+        #ui-top {
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            background: var(--blanco);
+            border-bottom: 5px solid var(--acento);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 
-.card {
-  background: white;
-  border-radius: 15px;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 400px;
-}
+        .burbuja {
+            background: var(--blanco);
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: 3px solid var(--secundario);
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 0 var(--secundario);
+        }
 
-button {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: #4caf50;
-  color: white;
-  font-size: 16px;
-}
+        /* --- PANTALLAS --- */
+        .pantalla {
+            display: none;
+            width: 90%;
+            max-width: 450px;
+            margin-top: 20px;
+            text-align: center;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-button:hover {
-  background: #45a049;
-}
+        .activa { display: block; }
 
-#lives {
-  font-size: 24px;
-}
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
 
-#timer {
-  font-size: 18px;
-  margin: 10px;
-}
+        /* --- PREGUNTAS --- */
+        .caja-pregunta {
+            background: var(--blanco);
+            padding: 25px;
+            border-radius: 35px;
+            border: 4px solid var(--secundario);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+        }
 
-#progress {
-  height: 10px;
-  background: #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-}
+        .opciones-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
 
-#bar {
-  height: 10px;
-  width: 100%;
-  background: red;
-}
+        .boton-opcion {
+            background: #F0F4F8;
+            border: 3px solid #D1D9E6;
+            padding: 15px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-#scratchCanvas {
-  background: gold;
-  border-radius: 10px;
-}
+        .boton-opcion:active { transform: translateY(4px); }
+        .correcta { background: var(--verde) !important; color: white; border-color: #6fb01d !important; }
+        .incorrecta { background: var(--primario) !important; color: white; border-color: #d6454a !important; }
 
-.hidden {
-  display: none;
-}
+        /* --- RASCA Y GANA --- */
+        #contenedor-rasca {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            margin: 20px auto;
+            border-radius: 25px;
+            border: 6px solid var(--acento);
+            overflow: hidden;
+            background: #fff;
+        }
 
-</style>
+        #canvas-rasca {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 2;
+            touch-action: none;
+        }
+
+        .premio-debajo {
+            position: absolute;
+            width: 100%; height: 100%;
+            background: linear-gradient(45deg, #FF9A9E, #FAD0C4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        /* --- BOTONES --- */
+        .btn-grande {
+            background: var(--verde);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #6fb01d;
+            text-transform: uppercase;
+        }
+
+        .btn-grande:active { transform: translateY(6px); box-shadow: none; }
+
+        .nivel-texto {
+            color: var(--secundario);
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+    <div id="ui-top">
+        <div class="burbuja" id="nivel-txt">Nivel: 1</div>
+        <div class="burbuja" id="puntos-txt">Puntos: 0/30</div>
+        <div class="burbuja" id="vidas-txt">❤️❤️❤️</div>
+    </div>
 
-<h1>🎉 RascaGana Kids 🎉</h1>
+    <!-- INICIO -->
+    <div id="pantalla-inicio" class="pantalla activa">
+        <h1 style="color: var(--primario); font-size: 2.5rem;">¡HOLA PEQUE! 🇪🇸</h1>
+        <p style="font-size: 1.2rem;">¿Listo para el desafío de España?</p>
+        <img src="https://img.icons8.com/fluency/144/beach-ball.png" alt="balon">
+        <br><br>
+        <button class="btn-grande" onclick="empezarJuego()">¡A JUGAR!</button>
+    </div>
 
-<div id="hud">
-  <div id="lives"></div>
-  <div id="score">Puntos: 0/50</div>
-  <div id="timer">Tiempo: 45</div>
-  <div id="progress"><div id="bar"></div></div>
-</div>
+    <!-- JUEGO (TRIVIA) -->
+    <div id="pantalla-trivia" class="pantalla">
+        <div class="caja-pregunta">
+            <h2 id="pregunta-txt">Cargando...</h2>
+            <div class="opciones-grid" id="opciones-box"></div>
+        </div>
+    </div>
 
-<div id="questionCard" class="card">
-  <h3 id="question"></h3>
-  <div id="answers"></div>
-</div>
+    <!-- RASCA -->
+    <div id="pantalla-rasca" class="pantalla">
+        <h2 style="color: var(--secundario);">¡RASCA EL DIBUJO!</h2>
+        <div id="contenedor-rasca">
+            <div class="premio-debajo">
+                <span style="font-size: 1rem; font-weight: bold;">HAS GANADO</span>
+                <strong id="puntos-ganados" style="font-size: 3rem;">+5</strong>
+                <span style="font-size: 1rem;">PUNTOS</span>
+            </div>
+            <canvas id="canvas-rasca" width="300" height="150"></canvas>
+        </div>
+        <p>¡Usa tu dedo para descubrir los puntos!</p>
+    </div>
 
-<div id="scratchCard" class="card hidden">
-  <canvas id="scratchCanvas" width="300" height="150"></canvas>
-  <p id="scratchResult"></p>
-</div>
+    <!-- NIVEL COMPLETADO / FIN -->
+    <div id="pantalla-nivel" class="pantalla">
+        <h1 id="titulo-nivel">¡SÚPER BIEN!</h1>
+        <div id="emoji-nivel" style="font-size: 5rem;">🚀</div>
+        <p id="msg-nivel" style="font-size: 1.2rem;"></p>
+        <br>
+        <button class="btn-grande" id="btn-continuar" onclick="siguienteNivel()">CONTINUAR</button>
+    </div>
 
-<div id="gameOver" class="card hidden">
-  <h2>💀 Game Over</h2>
-  <p id="finalScore"></p>
-  <button onclick="resetGame()">Jugar de nuevo</button>
-</div>
+    <script>
+        // --- BANCO DE PREGUNTAS (ESPAÑA + FÁCILES 6-10 AÑOS) ---
+        const bancoPreguntas = [
+            { q: "¿Cuál es la capital de España?", a: ["Madrid", "Barcelona", "Valencia"], c: "Madrid" },
+            { q: "¿Qué colores tiene la bandera de España?", a: ["Rojo y Amarillo", "Azul y Blanco", "Verde y Rojo"], c: "Rojo y Amarillo" },
+            { q: "¿Cuál es el animal más alto del mundo?", a: ["La jirafa", "El elefante", "El león"], c: "La jirafa" },
+            { q: "¿En qué país vivimos?", a: ["España", "Francia", "Portugal"], c: "España" },
+            { q: "¿Cuántos dedos tenemos en una mano?", a: ["5", "4", "6"], c: "5" },
+            { q: "¿Cómo se llama el río que pasa por Madrid?", a: ["Manzanares", "Ebro", "Tajo"], c: "Manzanares" },
+            { q: "¿Qué montaña es la más alta de España?", a: ["El Teide", "Mulhacén", "Aneto"], c: "El Teide" },
+            { q: "¿Qué idioma hablamos en España?", a: ["Español", "Inglés", "Alemán"], c: "Español" },
+            { q: "¿De qué color es la nieve?", a: ["Blanca", "Azul", "Rosa"], c: "Blanca" },
+            { q: "¿Cuántas patas tiene una araña?", a: ["8", "6", "4"], c: "8" },
+            { q: "¿Cuál es el postre frío que se come en verano?", a: ["Helado", "Sopa", "Filete"], c: "Helado" },
+            { q: "¿Qué animal pone huevos?", a: ["La gallina", "El perro", "El gato"], c: "La gallina" }
+        ];
 
-</div>
+        let estado = {
+            nivel: 1,
+            puntos: 0,
+            vidas: 3,
+            preguntaActual: null,
+            rascando: false
+        };
 
-<script>
-// =======================
-// ESTADO
-// =======================
-let lives = parseInt(localStorage.getItem("lives")) || 3;
-let points = parseInt(localStorage.getItem("points")) || 0;
-let collection = JSON.parse(localStorage.getItem("collection")) || [];
-
-let timer;
-let timeLeft = 45;
-
-// =======================
-// UI
-// =======================
-function updateHUD() {
-  document.getElementById("lives").innerHTML = "❤️".repeat(lives);
-  document.getElementById("score").innerText = `Puntos: ${points}/50`;
-}
-
-// =======================
-// TEMPORIZADOR
-// =======================
-function startTimer() {
-  timeLeft = 45;
-  document.getElementById("timer").innerText = "Tiempo: " + timeLeft;
-
-  timer = setInterval(() => {
-    timeLeft--;
-    document.getElementById("timer").innerText = "Tiempo: " + timeLeft;
-    document.getElementById("bar").style.width = (timeLeft / 45 * 100) + "%";
-
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      loseLife();
-      loadQuestion();
-    }
-  }, 1000);
-}
-
-// =======================
-// API TRIVIA
-// =======================
-async function loadQuestion() {
-  document.getElementById("scratchCard").classList.add("hidden");
-  document.getElementById("questionCard").classList.remove("hidden");
-
-  clearInterval(timer);
-
-  try {
-    let res = await fetch("https://opentdb.com/api.php?amount=1&type=multiple&difficulty=easy");
-    let data = await res.json();
-    let q = data.results[0];
-
-    let answers = [...q.incorrect_answers];
-    answers.push(q.correct_answer);
-    answers.sort(() => Math.random() - 0.5);
-
-    document.getElementById("question").innerHTML = q.question;
-
-    let answersDiv = document.getElementById("answers");
-    answersDiv.innerHTML = "";
-
-    answers.slice(0,3).forEach(ans => {
-      let btn = document.createElement("button");
-      btn.innerHTML = ans;
-
-      btn.onclick = () => {
-        clearInterval(timer);
-        if (ans === q.correct_answer) {
-          showScratch();
-        } else {
-          loseLife();
-          loadQuestion();
+        // --- INICIO ---
+        function empezarJuego() {
+            estado.vidas = 3;
+            estado.puntos = 0;
+            estado.nivel = 1;
+            actualizarUI();
+            irAPregunta();
         }
-      };
 
-      answersDiv.appendChild(btn);
-    });
+        function irAPregunta() {
+            mostrarPantalla('pantalla-trivia');
+            const p = bancoPreguntas[Math.floor(Math.random() * bancoPreguntas.length)];
+            estado.preguntaActual = p;
+            
+            document.getElementById('pregunta-txt').innerText = p.q;
+            const box = document.getElementById('opciones-box');
+            box.innerHTML = '';
+            
+            const opciones = [...p.a].sort(() => Math.random() - 0.5);
+            opciones.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'boton-opcion';
+                btn.innerText = opt;
+                btn.onclick = () => revisarRespuesta(opt, p.c, btn);
+                box.appendChild(btn);
+            });
+        }
 
-    startTimer();
+        function revisarRespuesta(elegida, correcta, btn) {
+            const botones = document.querySelectorAll('.boton-opcion');
+            botones.forEach(b => b.style.pointerEvents = 'none');
 
-  } catch {
-    document.getElementById("question").innerText = "Error cargando pregunta";
-  }
-}
+            if (elegida === correcta) {
+                btn.classList.add('correcta');
+                setTimeout(() => prepararRasca(), 1000);
+            } else {
+                btn.classList.add('incorrecta');
+                estado.vidas--;
+                actualizarUI();
+                if (estado.vidas <= 0) {
+                    perder();
+                } else {
+                    setTimeout(() => irAPregunta(), 1500);
+                }
+            }
+        }
 
-// =======================
-// VIDAS
-// =======================
-function loseLife() {
-  lives--;
-  saveState();
-  updateHUD();
+        // --- RASCA Y GANA ---
+        function prepararRasca() {
+            mostrarPantalla('pantalla-rasca');
+            const valor = Math.floor(Math.random() * 5) + 5; // Gana entre 5 y 10 puntos
+            document.getElementById('puntos-ganados').innerText = `+${valor}`;
+            
+            const canvas = document.getElementById('canvas-rasca');
+            const ctx = canvas.getContext('2d');
+            
+            // Capa azul con puntitos
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#1982C4';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff33';
+            for(let i=0; i<30; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random()*300, Math.random()*150, 10, 0, Math.PI*2);
+                ctx.fill();
+            }
 
-  if (lives <= 0) {
-    showGameOver();
-  }
-}
+            let porcentajeLimpiado = 0;
+            estado.rascando = false;
 
-// =======================
-// SCRATCH GAME
-// =======================
-function showScratch() {
-  document.getElementById("questionCard").classList.add("hidden");
-  document.getElementById("scratchCard").classList.remove("hidden");
+            function raspar(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.pageX || e.touches[0].pageX) - rect.left;
+                const y = (e.pageY || e.touches[0].pageY) - rect.top;
+                
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.fill();
 
-  let canvas = document.getElementById("scratchCanvas");
-  let ctx = canvas.getContext("2d");
+                porcentajeLimpiado += 1;
+                if (porcentajeLimpiado > 150 && !estado.rascando) {
+                    estado.rascando = true;
+                    finalizarRasca(valor);
+                }
+            }
 
-  ctx.fillStyle = "gray";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+            canvas.onmousemove = (e) => { if(e.buttons === 1) raspar(e) };
+            canvas.ontouchmove = raspar;
+        }
 
-  let revealed = false;
-  let prize = Math.floor(Math.random() * 6) + 1;
+        function finalizarRasca(v) {
+            estado.puntos += v;
+            actualizarUI();
+            
+            setTimeout(() => {
+                if (estado.puntos >= 30) {
+                    subirDeNivel();
+                } else {
+                    irAPregunta();
+                }
+            }, 1000);
+        }
 
-  function scratch(x, y) {
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.beginPath();
-    ctx.arc(x, y, 15, 0, Math.PI * 2);
-    ctx.fill();
+        // --- NIVELES Y LOGROS ---
+        function subirDeNivel() {
+            estado.nivel++;
+            estado.puntos = 0; // Reiniciar puntos para el siguiente nivel
+            actualizarUI();
+            
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            
+            mostrarPantalla('pantalla-nivel');
+            document.getElementById('titulo-nivel').innerText = "¡NIVEL COMPLETADO!";
+            document.getElementById('msg-nivel').innerText = `¡Eres increíble! Ahora vas al Nivel ${estado.nivel}`;
+            document.getElementById('btn-continuar').innerText = "¡VAMOS!";
+        }
 
-    if (!revealed) {
-      revealed = true;
-      points += prize;
-      document.getElementById("scratchResult").innerText = `+${prize} puntos`;
-      saveState();
-      updateHUD();
+        function perder() {
+            mostrarPantalla('pantalla-nivel');
+            document.getElementById('titulo-nivel').innerText = "¡OH NO!";
+            document.getElementById('emoji-nivel').innerText = "🤕";
+            document.getElementById('msg-nivel').innerText = "Te has quedado sin vidas. ¡Prueba otra vez!";
+            document.getElementById('btn-continuar').innerText = "VOLVER A EMPEZAR";
+            document.getElementById('btn-continuar').onclick = () => empezarJuego();
+        }
 
-      setTimeout(() => {
-        if (points >= 50) winPrize();
-        else loadQuestion();
-      }, 1500);
-    }
-  }
+        function siguienteNivel() {
+            irAPregunta();
+        }
 
-  canvas.onmousemove = (e) => {
-    scratch(e.offsetX, e.offsetY);
-  };
+        // --- AUXILIARES ---
+        function actualizarUI() {
+            document.getElementById('nivel-txt').innerText = `Nivel: ${estado.nivel}`;
+            document.getElementById('puntos-txt').innerText = `Puntos: ${estado.puntos}/30`;
+            document.getElementById('vidas-txt').innerText = '❤️'.repeat(estado.vidas);
+        }
 
-  canvas.ontouchmove = (e) => {
-    let rect = canvas.getBoundingClientRect();
-    let touch = e.touches[0];
-    scratch(touch.clientX - rect.left, touch.clientY - rect.top);
-  };
-}
+        function mostrarPantalla(id) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+        }
 
-// =======================
-// PREMIO
-// =======================
-function winPrize() {
-  let emojis = ["🏆","🌟","🎨","🚀","👑","🎪"];
-  let reward = emojis[Math.floor(Math.random() * emojis.length)];
-
-  collection.push(reward);
-  localStorage.setItem("collection", JSON.stringify(collection));
-
-  alert("🎉 ¡PREMIO! " + reward);
-
-  resetGame();
-}
-
-// =======================
-// GAME OVER
-// =======================
-function showGameOver() {
-  document.getElementById("questionCard").classList.add("hidden");
-  document.getElementById("scratchCard").classList.add("hidden");
-  document.getElementById("gameOver").classList.remove("hidden");
-
-  document.getElementById("finalScore").innerText = `Puntos: ${points}`;
-}
-
-// =======================
-// RESET
-// =======================
-function resetGame() {
-  lives = 3;
-  points = 0;
-  saveState();
-  updateHUD();
-
-  document.getElementById("gameOver").classList.add("hidden");
-
-  loadQuestion();
-}
-
-// =======================
-// STORAGE
-// =======================
-function saveState() {
-  localStorage.setItem("lives", lives);
-  localStorage.setItem("points", points);
-}
-
-// =======================
-// INIT
-// =======================
-updateHUD();
-loadQuestion();
-
-</script>
-
+        actualizarUI();
+    </script>
 </body>
 </html>
